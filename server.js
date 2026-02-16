@@ -2,60 +2,36 @@ const express = require("express");
 const path = require("path");
 const mongoose = require("mongoose");
 const multer = require("multer");
-const app = express();
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 require("dotenv").config();
 
+const app = express();
 const PUBLIC_DIR = __dirname;
 
-// Static files serve karo
+// ================= STATIC FILES =================
 app.use(express.static(PUBLIC_DIR));
-
-// Clean URL rewrite rules
-app.get("/:page", (req, res) => {
-  const page = req.params.page;
-
-  // Mapping logic
-  const fileMap = {
-    home: "home.html",
-    "about-us": "about-us-1.html",
-    "our-vision": "our-vision-1.html",
-    "our-values": "about-us-1.html",
-    contact: "contact.html"
-  };
-
-  const fileName = fileMap[page] || `${page}.html`;
-
-  res.sendFile(path.join(PUBLIC_DIR, fileName), (err) => {
-    if (err) {
-      res.status(404).send("Page not found");
-    }
-  });
-});
-
-
-// ================= MIDDLEWARE =================
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Serve frontend (parent folder se)
-// app.use(express.static(path.join(__dirname, "..")));
-
 // ================= DATABASE =================
 mongoose.connect(process.env.MONGO_URI)
-.then(() => console.log("MongoDB Connected"))
-.catch(err => console.log(err));
+  .then(() => console.log("MongoDB Connected"))
+  .catch(err => console.log("Mongo Error:", err));
 
-// mongoose.connect("mongodb://127.0.0.1:27017/websiteDB")
-// .then(() => console.log("MongoDB Local Connected"))
-// .catch(err => console.log(err));
+// ================= CLOUDINARY CONFIG =================
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET
+});
 
-// ================= FILE UPLOAD =================
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, "..", "uploads"));
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
+// ================= FILE UPLOAD (Cloudinary) =================
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "resumes",
+    resource_type: "raw"
   }
 });
 
@@ -74,6 +50,28 @@ const formSchema = new mongoose.Schema({
 
 const Form = mongoose.model("Form", formSchema);
 
+// ================= CLEAN URL ROUTING =================
+app.get("/:page", (req, res, next) => {
+  const page = req.params.page;
+
+  const fileMap = {
+    home: "home.html",
+    "about-us": "about-us-1.html",
+    "our-vision": "our-vision-1.html",
+    "our-values": "about-us-1.html",
+    contact: "contact.html",
+    careers: "careers.html"
+  };
+
+  const fileName = fileMap[page] || `${page}.html`;
+
+  const filePath = path.join(PUBLIC_DIR, fileName);
+
+  res.sendFile(filePath, (err) => {
+    if (err) next();
+  });
+});
+
 // ================= CONTACT =================
 app.post("/api/contact", async (req, res) => {
   try {
@@ -86,8 +84,8 @@ app.post("/api/contact", async (req, res) => {
     });
 
     res.send("<script>alert('Contact Submitted'); window.history.back();</script>");
-  } catch {
-    res.status(500).send("Error");
+  } catch (err) {
+    res.status(500).send("Error submitting contact form");
   }
 });
 
@@ -100,31 +98,22 @@ app.post("/api/career", upload.single("resume"), async (req, res) => {
       phone: req.body.phone,
       email: req.body.email,
       message: req.body.message,
-      resume: req.file ? req.file.filename : "",
+      resume: req.file ? req.file.path : "",
       type: "career"
     });
 
     res.send("<script>alert('Application Submitted'); window.history.back();</script>");
 
-  } catch {
-    res.status(500).send("Error");
+  } catch (err) {
+    res.status(500).send("Error submitting application");
   }
+});
+
+// ================= ROOT =================
+app.get("/", (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, "index.html"));
 });
 
 // ================= SERVER =================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log("Server running on port " + PORT));
-
-// app.get("/", (req, res) => {
-//   res.redirect("/prodesk.in/home.html");
-// });
-
-
-// Root route
-app.get("/", (req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, "index.html"));
-});
-
-// app.listen(PORT, () => {
-//   console.log(`Server running at http://localhost:${PORT}`);
-// });
