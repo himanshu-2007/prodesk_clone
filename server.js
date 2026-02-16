@@ -106,8 +106,8 @@ app.post("/api/career", upload.single("resume"), async (req, res) => {
       return res.send("Resume file not received");
     }
 
-    const resumeUrl = req.file.secure_url;
-    const resumeName = req.file.original_filename + "." + req.file.format;
+    const resumeUrl = req.file.path; // correct secure url
+    const resumeName = req.file.originalname; // original uploaded name
 
     await Form.create({
       name: req.body.name,
@@ -126,6 +126,7 @@ app.post("/api/career", upload.single("resume"), async (req, res) => {
     res.status(500).send("Error submitting application");
   }
 });
+
 
 // ================= ROOT =================
 app.get("/", (req, res) => {
