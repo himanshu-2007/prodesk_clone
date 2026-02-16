@@ -98,7 +98,7 @@ app.post("/api/career", upload.single("resume"), async (req, res) => {
       phone: req.body.phone,
       email: req.body.email,
       message: req.body.message,
-      resume: req.file ? req.file.path : "",
+      resume: req.file ? req.file.secure_url : "",
       type: "career"
     });
 
