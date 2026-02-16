@@ -38,16 +38,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // Serve frontend (parent folder se)
-app.use(express.static(path.join(__dirname, "..")));
+// app.use(express.static(path.join(__dirname, "..")));
 
 // ================= DATABASE =================
-// mongoose.connect(process.env.MONGO_URI)
-// .then(() => console.log("MongoDB Connected"))
-// .catch(err => console.log(err));
-
-mongoose.connect("mongodb://127.0.0.1:27017/websiteDB")
-.then(() => console.log("MongoDB Local Connected"))
+mongoose.connect(process.env.MONGO_URI)
+.then(() => console.log("MongoDB Connected"))
 .catch(err => console.log(err));
+
+// mongoose.connect("mongodb://127.0.0.1:27017/websiteDB")
+// .then(() => console.log("MongoDB Local Connected"))
+// .catch(err => console.log(err));
 
 // ================= FILE UPLOAD =================
 const storage = multer.diskStorage({
@@ -115,15 +115,15 @@ app.post("/api/career", upload.single("resume"), async (req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log("Server running on port " + PORT));
 
-app.get("/", (req, res) => {
-  res.redirect("/prodesk.in/home.html");
-});
+// app.get("/", (req, res) => {
+//   res.redirect("/prodesk.in/home.html");
+// });
 
 
 // Root route
-// app.get("/", (req, res) => {
-//   res.sendFile(path.join(PUBLIC_DIR, "index.html"));
-// });
+app.get("/", (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, "index.html"));
+});
 
 // app.listen(PORT, () => {
 //   console.log(`Server running at http://localhost:${PORT}`);
