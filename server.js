@@ -100,19 +100,24 @@ app.post("/api/contact", async (req, res) => {
 app.post("/api/career", upload.single("resume"), async (req, res) => {
   try {
 
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
+
+    const resumeUrl = req.file ? req.file.secure_url : null;
+
     await Form.create({
       name: req.body.name,
       phone: req.body.phone,
       email: req.body.email,
       message: req.body.message,
-      resume: req.file ? req.file.secure_url : "",
+      resume: resumeUrl,
       type: "career"
     });
 
     res.send("<script>alert('Application Submitted'); window.history.back();</script>");
 
   } catch (err) {
-    console.log(err);
+    console.log("Career Error:", err);
     res.status(500).send("Error submitting application");
   }
 });
