@@ -26,12 +26,20 @@ cloudinary.config({
   api_secret: process.env.CLOUD_API_SECRET
 });
 
-// ================= FILE UPLOAD (Cloudinary) =================
+// ================= FILE UPLOAD (Cloudinary - FIXED) =================
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: "resumes",
-    resource_type: "raw"
+  params: async (req, file) => {
+    const originalName = file.originalname;
+    const extension = originalName.split(".").pop();
+    const baseName = originalName.substring(0, originalName.lastIndexOf("."));
+
+    return {
+      folder: "resumes",
+      resource_type: "auto",
+      public_id: baseName + "-" + Date.now(),
+      format: extension
+    };
   }
 });
 
@@ -64,7 +72,6 @@ app.get("/:page", (req, res, next) => {
   };
 
   const fileName = fileMap[page] || `${page}.html`;
-
   const filePath = path.join(PUBLIC_DIR, fileName);
 
   res.sendFile(filePath, (err) => {
@@ -105,6 +112,7 @@ app.post("/api/career", upload.single("resume"), async (req, res) => {
     res.send("<script>alert('Application Submitted'); window.history.back();</script>");
 
   } catch (err) {
+    console.log(err);
     res.status(500).send("Error submitting application");
   }
 });
