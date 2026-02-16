@@ -52,9 +52,11 @@ const formSchema = new mongoose.Schema({
   email: String,
   message: String,
   resume: String,
+  resumeName: String,
   type: String,
   createdAt: { type: Date, default: Date.now }
 });
+
 
 const Form = mongoose.model("Form", formSchema);
 
@@ -100,10 +102,12 @@ app.post("/api/contact", async (req, res) => {
 app.post("/api/career", upload.single("resume"), async (req, res) => {
   try {
 
-    console.log("BODY:", req.body);
-    console.log("FILE:", req.file);
+    if (!req.file) {
+      return res.send("Resume file not received");
+    }
 
-    const resumeUrl = req.file ? req.file.secure_url : null;
+    const resumeUrl = req.file.secure_url;
+    const resumeName = req.file.original_filename + "." + req.file.format;
 
     await Form.create({
       name: req.body.name,
@@ -111,6 +115,7 @@ app.post("/api/career", upload.single("resume"), async (req, res) => {
       email: req.body.email,
       message: req.body.message,
       resume: resumeUrl,
+      resumeName: resumeName,
       type: "career"
     });
 
